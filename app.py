@@ -207,3 +207,166 @@ class ForecastingApp:
                             st.error(f"{result['model']}: {result['error']}")
         else:
             st.warning("👈 Please upload data first!")
+
+    def forecast_page(self):
+        """Generate and visualize forecasts"""
+        st.header("📈 Demand Forecast")
+        
+        # Check if model is trained
+        if not st.session_state.get('trained', False):
+            st.warning("⚠️ Please train the model first")
+            return
+        
+        # Check if required session state exists
+        if (st.session_state.forecaster is None or 
+            st.session_state.processed_df is None or 
+            st.session_state.feature_info is None):
+            st.error("❌ Session state corrupted. Please retrain the model.")
+            return
+        
+        # Load from session
+        forecaster = st.session_state.forecaster
+        processed_df = st.session_state.processed_df
+        feature_info = st.session_state.feature_info
+
+        # Forecast controls
+        periods = st.slider("Forecast Horizon (days)", 7, 90, 30)
+
+        if st.button("🔮 Generate Forecast", type="primary"):
+            with st.spinner("Generating predictions..."):
+                forecasts = forecaster.forecast(processed_df, periods, feature_info)
+
+                # Create plot
+                fig = make_subplots(
+                    rows=2, cols=1,
+                    subplot_titles=('Demand Forecast', 'Confidence Intervals'),
+                    vertical_spacing=0.1,
+                    row_heights=[0.7, 0.3]
+                )
+
+                # Historical data
+                hist_df = processed_df.tail(60)
+
+                fig.add_trace(
+                    go.Scatter(
+                        x=hist_df['date'],
+                        y=hist_df['sales'],
+                        mode='lines+markers',
+                        name='Historical Sales'
+                    ),
+                    row=1, col=1
+                )
+
+                # Prophet forecast
+                prophet_fc = forecasts['prophet']
+
+                fig.add_trace(
+                    go.Scatter(
+                        x=prophet_fc['ds'],
+                        y=prophet_fc['yhat'],
+                        mode='lines',
+                        name='Prophet Forecast'
+                    ),
+                    row=1, col=1
+                )
+
+                # Confidence interval
+                fig.add_trace(
+                    go.Scatter(
+                        x=prophet_fc['ds'],
+                        y=prophet_fc['yhat_upper'],
+                        line=dict(width=0),
+                        showlegend=False
+                    ),
+                    row=1, col=1
+                )
+
+                fig.add_trace(
+                    go.Scatter(
+                        x=prophet_fc['ds'],
+                        y=prophet_fc['yhat_lower'],
+                        fill='tonexty',
+                        name='Confidence Interval'
+                    ),
+                    row=1, col=1
+                )
+
+                # LightGBM forecast
+                if 'lgbm' in forecasts:
+                    future_dates = pd.date_range(
+                        start=processed_df['date'].max() + timedelta(days=1),
+                        periods=periods,
+                        freq='D'
+                    )
+
+                    fig.add_trace(
+                        go.Scatter(
+                            x=future_dates,
+                            y=forecasts['lgbm'],
+                            mode='lines+markers',
+                            name='LightGBM Forecast'
+                        ),
+                        row=1, col=1
+                    )
+
+                # Metrics
+                avg_forecast = prophet_fc['yhat'].tail(periods).mean()
+                st.metric("Avg Forecasted Demand", f"{avg_forecast:.0f} units/day")
+
+                # Layout
+                fig.update_layout(
+                    height=600,
+                    title="AI-Powered Demand Forecasting",
+                    hovermode='x unified'
+                )
+
+                st.plotly_chart(fig, use_container_width=True)
+
+                # Table
+                st.subheader("Detailed Predictions")
+
+                forecast_table = prophet_fc[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(periods)
+                forecast_table.columns = ['Date', 'Predicted', 'Lower', 'Upper']
+
+                st.dataframe(forecast_table, use_container_width=True)
+    
+    def inventory_page(self):
+        """Inventory optimization calculator"""
+        st.header("📦 Inventory Optimization")
+        
+        if st.session_state.processed_df is not None:
+            df = st.session_state.processed_df
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                lead_time = st.number_input("Lead Time (days)", min_value=1, max_value=30, value=7)
+            
+            with col2:
+                safety_stock = st.number_input("Safety Stock (units)", min_value=0, max_value=500, value=50)
+            
+            if st.button("Calculate Reorder Point", type="primary"):
+                avg_demand = df['sales'].tail(30).mean()
+                metrics = calculate_inventory_metrics(avg_demand, lead_time, safety_stock)
+                
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    st.metric("Avg Daily Demand", f"{metrics['average_daily_demand']} units")
+                with col2:
+                    st.metric("Lead Time", f"{metrics['lead_time']} days")
+                with col3:
+                    st.metric("Safety Stock", f"{metrics['safety_stock']} units")
+                with col4:
+                    st.metric("🔔 Reorder Point", f"{metrics['reorder_point']} units")
+                
+                st.success(metrics['recommendation'])
+                
+                # Demand distribution chart
+                fig = px.histogram(df.tail(90), x='sales', nbins=20,
+                                 title="Recent Demand Distribution",
+                                 labels={'sales': 'Daily Sales (Units)'})
+                st.plotly_chart(fig, use_container_width=True)
+        
+        else:
+            st.warning("👈 Upload data and train models first!")
