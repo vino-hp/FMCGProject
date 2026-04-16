@@ -90,3 +90,16 @@ def preprocess_data(df: pd.DataFrame, weather_data: Optional[pd.DataFrame] = Non
     
     print(f"✅ Preprocessing complete. Shape: {df.shape}")
     return df, feature_info
+
+
+def calculate_inventory_metrics(avg_demand: float, lead_time: float, safety_stock: float) -> Dict:
+    """Calculate reorder point and inventory recommendations"""
+    reorder_point = (avg_demand * lead_time) + safety_stock
+    
+    return {
+        'average_daily_demand': round(avg_demand, 2),
+        'reorder_point': round(reorder_point, 2),
+        'lead_time': lead_time,
+        'safety_stock': safety_stock,
+        'recommendation': f"Reorder when inventory <= {round(reorder_point, 2)} units"
+    }
