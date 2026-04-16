@@ -372,11 +372,9 @@ class ForecastingApp:
             st.warning("👈 Upload data and train models first!")
 
     def main():
-    app = ForecastingApp()
-    
-    # Sidebar navigation
+        app = ForecastingApp()
+        # Sidebar navigation
     page = app.sidebar_navigation()
-    
     # Render selected page
     if page == "🏠 Home":
         app.home_page()
