@@ -330,43 +330,4 @@ class ForecastingApp:
 
                 st.dataframe(forecast_table, use_container_width=True)
     
-    def inventory_page(self):
-        """Inventory optimization calculator"""
-        st.header("📦 Inventory Optimization")
-        
-        if st.session_state.processed_df is not None:
-            df = st.session_state.processed_df
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                lead_time = st.number_input("Lead Time (days)", min_value=1, max_value=30, value=7)
-            
-            with col2:
-                safety_stock = st.number_input("Safety Stock (units)", min_value=0, max_value=500, value=50)
-            
-            if st.button("Calculate Reorder Point", type="primary"):
-                avg_demand = df['sales'].tail(30).mean()
-                metrics = calculate_inventory_metrics(avg_demand, lead_time, safety_stock)
-                
-                col1, col2, col3, col4 = st.columns(4)
-                
-                with col1:
-                    st.metric("Avg Daily Demand", f"{metrics['average_daily_demand']} units")
-                with col2:
-                    st.metric("Lead Time", f"{metrics['lead_time']} days")
-                with col3:
-                    st.metric("Safety Stock", f"{metrics['safety_stock']} units")
-                with col4:
-                    st.metric("🔔 Reorder Point", f"{metrics['reorder_point']} units")
-                
-                st.success(metrics['recommendation'])
-                
-                # Demand distribution chart
-                fig = px.histogram(df.tail(90), x='sales', nbins=20,
-                                 title="Recent Demand Distribution",
-                                 labels={'sales': 'Daily Sales (Units)'})
-                st.plotly_chart(fig, use_container_width=True)
-        
-        else:
-            st.warning("👈 Upload data and train models first!")
+    
