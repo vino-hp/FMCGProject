@@ -11,7 +11,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 # Import project modules
-from util import load_data, preprocess_data, calculate_inventory_metrics, create_sample_data
+from utils import load_data, preprocess_data, calculate_inventory_metrics, create_sample_data
 from model import DemandForecaster
 from api import WeatherAPI
 
@@ -26,6 +26,7 @@ if 'feature_info' not in st.session_state:
     st.session_state.feature_info = None
 if 'forecaster' not in st.session_state:
     st.session_state.forecaster = None
+
 # Page configuration
 st.set_page_config(
     page_title="Demand Forecasting Dashboard",
@@ -59,6 +60,7 @@ class ForecastingApp:
         self.forecaster = st.session_state.forecaster
         self.weather_api = WeatherAPI()
         self.feature_info = st.session_state.feature_info
+        
     def sidebar_navigation(self):
         """Create professional sidebar navigation"""
         st.sidebar.title("🚀 Navigation")
@@ -75,6 +77,7 @@ class ForecastingApp:
         st.sidebar.caption("Prophet + LightGBM Hybrid Model")
         
         return page
+    
     def home_page(self):
         """Home page with KPIs and project info"""
         st.markdown('<h1 class="main-header">📊 Demand Forecasting & Inventory Optimization</h1>', unsafe_allow_html=True)
@@ -102,6 +105,7 @@ class ForecastingApp:
         
         st.markdown("---")
         st.info("👆 Upload your sales data (CSV) to get started!")
+    
     def upload_data_page(self):
         """Upload and store CSV data"""
         st.header("📁 Upload Sales Data")
@@ -138,7 +142,7 @@ class ForecastingApp:
             self.df = create_sample_data()
             st.session_state.df = self.df
             st.success("✅ Sample data loaded!")
-
+    
     def view_data_page(self):
         """Display processed data and statistics"""
         st.header("📊 Data Explorer")
@@ -167,7 +171,7 @@ class ForecastingApp:
             
         else:
             st.warning("👈 Please upload data first!")
-
+    
     def train_model_page(self):
         """Train ML models"""
         st.header("🤖 Model Training")
@@ -207,7 +211,7 @@ class ForecastingApp:
                             st.error(f"{result['model']}: {result['error']}")
         else:
             st.warning("👈 Please upload data first!")
-
+    
     def forecast_page(self):
         """Generate and visualize forecasts"""
         st.header("📈 Demand Forecast")
@@ -370,12 +374,13 @@ class ForecastingApp:
         
         else:
             st.warning("👈 Upload data and train models first!")
-    def main():
-        app = ForecastingApp()
+
+def main():
+    app = ForecastingApp()
     
     # Sidebar navigation
-
     page = app.sidebar_navigation()
+    
     # Render selected page
     if page == "🏠 Home":
         app.home_page()
