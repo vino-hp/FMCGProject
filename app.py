@@ -330,6 +330,7 @@ class ForecastingApp:
 
                 st.dataframe(forecast_table, use_container_width=True)
     
+<<<<<<< HEAD
     def inventory_page(self):
         """Inventory optimization calculator"""
         st.header("📦 Inventory Optimization")
@@ -374,6 +375,12 @@ class ForecastingApp:
     def main():
         app = ForecastingApp()
         # Sidebar navigation
+=======
+def main():
+    app = ForecastingApp()
+    
+    # Sidebar navigation
+>>>>>>> c4e57c2 (error clear)
     page = app.sidebar_navigation()
     # Render selected page
     if page == "🏠 Home":
