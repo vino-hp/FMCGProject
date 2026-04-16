@@ -11,7 +11,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 # Import project modules
-from utils import load_data, preprocess_data, calculate_inventory_metrics, create_sample_data
+from util import load_data, preprocess_data, calculate_inventory_metrics, create_sample_data
 from model import DemandForecaster
 from api import WeatherAPI
 
